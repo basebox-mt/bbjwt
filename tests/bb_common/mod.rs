@@ -47,7 +47,7 @@ pub fn get_test_id() -> &'static str {
 #[macro_export]
 macro_rules! log_error {
   ($($args:tt)+) => {
-    error!("[{}] {}", crate::bb_common::get_test_id(), format!($($args)+))
+    error!("[{}] {}", $crate::bb_common::get_test_id(), format!($($args)+))
   }
 }
 
@@ -57,7 +57,7 @@ macro_rules! log_error {
 #[macro_export]
 macro_rules! log_info {
   ($($args:tt)+) => {
-    info!("[{}] {}", crate::bb_common::get_test_id(), format!($($args)+));
+    info!("[{}] {}", $crate::bb_common::get_test_id(), format!($($args)+));
   }
 }
 
@@ -67,7 +67,7 @@ macro_rules! log_info {
 #[macro_export]
 macro_rules! log_debug {
   ($($args:tt)+) => {
-    debug!("[{}] {}", crate::bb_common::get_test_id(), format!($($args)+));
+    debug!("[{}] {}", $crate::bb_common::get_test_id(), format!($($args)+));
   }
 }
 

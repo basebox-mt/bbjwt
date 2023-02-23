@@ -28,7 +28,8 @@ const ISS: &str = "https://kc.basebox.health/realms/testing";
 ///
 fn load_asset(name: &str) -> String {
   let pfn = path_to_asset_file(name);
-  let mut file = File::open(&pfn).expect(&format!("Failed to open asset {}", &pfn));
+  let mut file = File::open(&pfn)
+    .unwrap_or_else(|_| panic!("Failed to open asset {}", &pfn));
   let mut data = String::new();
   file.read_to_string(&mut data).unwrap();
   data
