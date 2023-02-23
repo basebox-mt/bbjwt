@@ -192,6 +192,8 @@ pub struct KeyStore {
   reload_factor: f64,
   /// Time at which keys should be reloaded.
   reload_time: Option<SystemTime>,
+  /// default lifetime in seconds to use if the server did not specify any
+  default_lifetime: Option<u64>
 }
 
 impl JWKS {
@@ -558,6 +560,7 @@ impl KeyStore {
       load_time: None,
       reload_factor: RELOAD_INTERVAL_FACTOR,
       reload_time: None,
+      default_lifetime: None,
     })
   }
 
@@ -588,6 +591,7 @@ impl KeyStore {
       load_time: None,
       reload_factor: RELOAD_INTERVAL_FACTOR,
       reload_time: None,
+      default_lifetime: None,
     };
 
     /* load keys from URL if applicable */
@@ -776,6 +780,19 @@ impl KeyStore {
   }
 
   ///
+  /// Set a default lifetime in seconds.
+  ///
+  /// If the keyserver does not specify a key lifetime, bbjwt will use the lifetime set
+  /// with this function.
+  ///
+  /// # Arguments
+  /// `lifetime` - default lifetime in seconds; if None, the value is cleared.
+  ///
+  pub fn set_default_lifetime(&mut self, lifetime: Option<u64>) {
+    self.default_lifetime = lifetime;
+  }
+
+  ///
   /// Get the current fraction time to check for token reload time.
   ///
   pub fn reload_factor(&self) -> f64 {
@@ -859,8 +876,13 @@ impl KeyStore {
       .await
       .map_err(|e| BBError::Other(format!("Failed to load IdP keyset: {:?}", e)))?;
 
-    /* get expiration/life time from cache-control HTTP header field */
-    let lifetime = KeyStore::get_key_expiration_time(&mut response);
+    /* get expiration/life time from cache-control HTTP header field or the optional
+     * default lifetime. */
+    let lifetime = if let Ok(lifetime) = KeyStore::get_key_expiration_time(&mut response) {
+      Some(lifetime)
+    } else {
+      self.default_lifetime
+    };
 
     /* load JWKS from URL */
     let json = response
@@ -884,8 +906,8 @@ impl KeyStore {
 
     /* update load time and expiration time */
     let load_time = SystemTime::now();
-    if let Ok(value) = lifetime {
-      let seconds: u64 = (value as f64 * self.reload_factor) as u64;
+    if let Some(lifetime) = lifetime {
+      let seconds: u64 = (lifetime as f64 * self.reload_factor) as u64;
       self.reload_time = Some(load_time + Duration::new(seconds, 0));
     }
 
