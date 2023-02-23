@@ -899,9 +899,9 @@ impl KeyStore {
       .write()
       .map_err(|e| BBError::Fatal(format!("Keyset write lock is poisoned: {}", e)))?;
 
-    /* convert all keys to OpenSSL types */
+    /* convert all keys to OpenSSL types and insert them into the keyset */
     for key in keyset.keys {
-      keys.push(pubkey_from_jwk(&key)?);
+      keys.insert(0, pubkey_from_jwk(&key)?);
     }
 
     /* update load time and expiration time */
